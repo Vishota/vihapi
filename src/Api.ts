@@ -10,21 +10,27 @@ export type VihapiDescription = {
 
 export default function api(description:VihapiDescription) {
     const server = http.createServer(async (req,res)=>{
-        let normalizedURI = req.url ? normalizeURI(req.url) : '';
-        if(description[normalizedURI]) {
-            if(description[normalizedURI].conditions && description[normalizedURI].conditions?.length) {
-                let conditions:Promise<any>[] = [];
-                description[normalizedURI].conditions?.forEach(condition=>{
-                    conditions.push(condition(req, res));
-                });
-                await Promise.all(conditions);
+        try {
+            let normalizedURI = req.url ? normalizeURI(req.url) : '';
+            if(description[normalizedURI]) {
+                if(description[normalizedURI].conditions && description[normalizedURI].conditions?.length) {
+                    let conditions:Promise<any>[] = [];
+                    description[normalizedURI].conditions?.forEach(condition=>{
+                        conditions.push(condition(req, res));
+                    });
+                    await Promise.all(conditions);
+                }
+                await description[normalizedURI].handler(req, res);
             }
-            await description[normalizedURI].handler(req, res);
-            res.end();
+            else {
+                res.statusCode = 404;
+                res.write(JSON.stringify({'errorCode':404,'message': normalizeURI(req.url ? req.url : '') + ' not found 404'}));
+            }
+        } catch(e) {
+            res.statusCode = 500;
+            res.write(JSON.stringify({'errorCode':500,'message':e}));
         }
-        else {
-            res.statusCode = 404;
-            res.write(normalizeURI(req.url ? req.url : '') + ' not found 404');
+        finally {
             res.end();
         }
     });
