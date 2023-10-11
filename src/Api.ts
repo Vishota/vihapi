@@ -29,6 +29,7 @@ export default function api(description:VihapiDescription) {
         } catch(e) {
             res.statusCode = 500;
             res.write(JSON.stringify({'errorCode':500,'message':e}));
+            console.warn('500 error: '+e);
         }
         finally {
             res.end();
