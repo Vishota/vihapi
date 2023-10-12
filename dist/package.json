@@ -1,6 +1,6 @@
 {
   "name": "vihapi",
-  "version": "1.0.3",
+  "version": "1.1.1",
   "description": "Vihapi is a tool that helps you quickly launch your api",
   "main": "index.js",
   "scripts": {
