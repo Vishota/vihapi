@@ -5,11 +5,11 @@ export type BasicVihapiHandler = {
     handler: (
         req: http.IncomingMessage,
         res: http.ServerResponse<http.IncomingMessage>
-    ) => Promise<void>,
+    ) => Promise<void> | void,
     conditions?: ((
         req: http.IncomingMessage,
         res: http.ServerResponse<http.IncomingMessage>
-    ) => Promise<boolean>)[]
+    ) => Promise<boolean> | boolean)[]
 }
 export type VihapiHandler = BasicVihapiHandler;
 export type VihapiDescription = {
@@ -45,6 +45,7 @@ export default function api(
         // sending, logging and displaying HttpError information
         function handleHttpError(error: HttpError) {
             res.statusCode = error.info.code;
+            res.setHeader('Content-type', 'text/html; charset=utf-8');
             res.write(JSON.stringify({
                 'errorCode': error.info.code,
                 'message': error.info.code + ': ' + error.info.description + (options.sendExceptionInfo ? ' | ' + error.info.realError : '')
@@ -52,7 +53,7 @@ export default function api(
             if (options.errorLogger) {
                 options.errorLogger(error);
             }
-            if (options.showLogs && options.showLogs[error.info.code]) {
+            if (options.showLogs && (options.showLogs[error.info.code] || (options.showLogs['default'] && options.showLogs[error.info.code] !== false))) {
                 console.log(error);
             }
         }
@@ -68,7 +69,7 @@ export default function api(
                     if (handler.conditions && handler.conditions?.length) {
                         let conditions: Promise<any>[] = [];
                         handler.conditions?.forEach(condition => {
-                            conditions.push(condition(req, res));
+                            conditions.push((async () => condition(req, res))());
                         });
                         await Promise.all(conditions);
                     }
