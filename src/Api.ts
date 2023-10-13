@@ -52,6 +52,9 @@ export default function api(
             if (options.errorLogger) {
                 options.errorLogger(error);
             }
+            if (options.showLogs && options.showLogs[error.info.code]) {
+                console.log(error);
+            }
         }
 
         // catching HttpErrors
